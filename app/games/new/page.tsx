@@ -13,29 +13,24 @@ export default function CreateGamePage() {
     max_players: '',
     competitions: [] as string[],
     management_type: 'LMS',
-    is_public: true,
-    missed_selection_rule: 'Eliminate',
+    missed_selection_rule: 'Eliminate Player',
     include_draws: false,
+    is_public: true,
   })
-
   const [availableMondays, setAvailableMondays] = useState<string[]>([])
   const [message, setMessage] = useState('')
-  const [createdGameDetails, setCreatedGameDetails] = useState<any>(null)
+  const [inviteCode, setInviteCode] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
+  // ✅ Generate next 10 Mondays, skipping current Monday if it's already past closing
   useEffect(() => {
     const mondays: string[] = []
-    const now = new Date()
-    const start = new Date(now)
+    const today = new Date()
+    const start = new Date(today)
     const day = start.getDay()
-    const diffToMonday = (1 + 7 - day) % 7
-
-    start.setDate(start.getDate() + diffToMonday)
+    const diff = (1 + 7 - day) % 7
+    start.setDate(start.getDate() + diff)
     start.setHours(6, 0, 0, 0)
-
-    if (day === 1 && now.getHours() >= 6) {
-      start.setDate(start.getDate() + 7)
-    }
 
     for (let i = 0; i < 10; i++) {
       const d = new Date(start)
@@ -43,10 +38,18 @@ export default function CreateGamePage() {
       mondays.push(d.toISOString().split('T')[0])
     }
 
-    setAvailableMondays(mondays)
-    setForm((prev) => ({ ...prev, start_date: mondays[0] }))
+    const validMondays = mondays.filter((m) => {
+      const start = new Date(m)
+      const closing = new Date(start)
+      closing.setDate(start.getDate() - 1)
+      return closing >= today
+    })
+
+    setAvailableMondays(validMondays)
+    setForm((prev) => ({ ...prev, start_date: validMondays[0] }))
   }, [])
 
+  // ✅ Auto-update closing date (1 day before start)
   useEffect(() => {
     if (form.start_date) {
       const start = new Date(form.start_date)
@@ -59,10 +62,10 @@ export default function CreateGamePage() {
     }
   }, [form.start_date])
 
+  // ✅ FIXED Checkbox typing issue
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const target = e.target as HTMLInputElement
-const { name, value, type, checked } = target
-
+    const { name, value, type, checked } = target
     setForm((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
@@ -82,12 +85,9 @@ const { name, value, type, checked } = target
     e.preventDefault()
     setLoading(true)
     setMessage('')
-    setCreatedGameDetails(null)
+    setInviteCode(null)
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('User not logged in.')
-
       if (Number(form.entry_fee_per_player) < 5)
         throw new Error('Entry fee must be at least £5.')
       if (Number(form.min_players) < 2)
@@ -95,48 +95,49 @@ const { name, value, type, checked } = target
       if (form.competitions.length === 0)
         throw new Error('Please select at least one competition.')
 
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('User not logged in.')
+
       const generatedCode = Math.random().toString(36).substring(2, 10)
 
       const payload = {
         created_by: user.id,
-        game_name: form.game_name.trim(),
+        game_name: form.game_name,
         start_date: form.start_date,
         closing_entry_date: form.closing_entry_date,
         entry_fee_per_player: Number(form.entry_fee_per_player),
         min_players: Number(form.min_players),
-        max_players: form.max_players === '' ? null : Number(form.max_players),
+        max_players: Number(form.max_players),
         competitions: form.competitions,
         management_type: 'LMS',
+        missed_selection_rule: form.missed_selection_rule,
+        include_draws: form.include_draws,
         game_code: generatedCode,
         status: 'open',
         is_public: form.is_public,
-        missed_selection_rule: form.missed_selection_rule,
-        include_draws: form.include_draws,
       }
 
-      const { error } = await supabase.from('games').insert([payload])
+      const { data, error } = await supabase.from('games').insert([payload]).select('*')
       if (error) throw error
+      if (!data || !data.length) throw new Error('Game inserted but no data returned')
 
-      setCreatedGameDetails({
-        ...payload,
-        game_code: generatedCode,
-      })
+      setInviteCode(generatedCode)
       setMessage('✅ Game Created!')
     } catch (err: any) {
       console.error('Error creating game:', err)
-      setMessage(`❌ ${err?.message || 'Unexpected error occurred'}`)
+      setMessage(`❌ ${err?.message ?? JSON.stringify(err) ?? 'Unknown error'}`)
     } finally {
       setLoading(false)
     }
   }
 
   const competitionsList = [
-    'England Premier League 2025–26',
-    'England Championship 2025–26',
-    'France Ligue 1 2025–26',
-    'Germany Bundesliga 2025–26',
-    'Italy Serie A 2025–26',
-    'Spain La Liga 2025–26',
+    'England Premier League 2025-26',
+    'England Championship 2025-26',
+    'France Ligue 1 2025-26',
+    'Germany Bundesliga 2025-26',
+    'Italy Serie A 2025-26',
+    'Spain La Liga 2025-26',
   ]
 
   const inputStyle = {
@@ -161,6 +162,7 @@ const { name, value, type, checked } = target
     color: '#0f0f0f',
     cursor: 'pointer',
     marginTop: '1.5rem',
+    boxSizing: 'border-box',
   } as React.CSSProperties
 
   return (
@@ -171,12 +173,16 @@ const { name, value, type, checked } = target
         fontFamily: 'Poppins, sans-serif',
         minHeight: '100vh',
         display: 'flex',
-        justifyContent: 'center',
-        paddingTop: '4rem',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        paddingTop: '6rem',
+        padding: '2rem',
       }}
     >
       <div
         style={{
+          position: 'relative',
           width: '100%',
           maxWidth: '44rem',
           backgroundColor: '#1a1a1a',
@@ -188,35 +194,21 @@ const { name, value, type, checked } = target
       >
         <h1
           style={{
-            color: '#fff',
+            color: '#ffffff',
             fontSize: '1.75rem',
             fontWeight: 800,
             textTransform: 'uppercase',
             textShadow: '0 0 8px #16a34a',
+            marginBottom: '1rem',
             textAlign: 'center',
           }}
         >
           Start a Game
         </h1>
 
-        <p
-          style={{
-            textAlign: 'center',
-            color: '#9ca3af',
-            marginBottom: '1.5rem',
-            fontSize: '0.95rem',
-          }}
-        >
-          LMS automatically charges a 10% commission from winnings.
-        </p>
-
         <form
           onSubmit={handleSubmit}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1rem',
-          }}
+          style={{ display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative', zIndex: 2 }}
         >
           <div>
             <label style={{ color: '#4ade80', fontWeight: 700 }}>Game Name</label>
@@ -246,7 +238,7 @@ const { name, value, type, checked } = target
 
           <div>
             <label style={{ color: '#4ade80', fontWeight: 700 }}>Entry Fee (£)</label>
-            <input type="number" name="entry_fee_per_player" value={form.entry_fee_per_player} onChange={handleChange} required min="5" style={inputStyle} />
+            <input type="number" name="entry_fee_per_player" value={form.entry_fee_per_player} onChange={handleChange} required min="0" style={inputStyle} />
           </div>
 
           <div>
@@ -260,178 +252,87 @@ const { name, value, type, checked } = target
           </div>
 
           <div>
-            <label style={{ color: '#4ade80', fontWeight: 700 }}>Missed Selection Rule</label>
-            <select name="missed_selection_rule" value={form.missed_selection_rule} onChange={handleChange} style={inputStyle}>
-              <option value="Eliminate">Eliminate Player</option>
+            <label style={{ color: '#4ade80', fontWeight: 700 }}>Missed Selection / Elimination Style</label>
+            <select name="missed_selection_rule" value={form.missed_selection_rule} onChange={handleChange} required style={inputStyle}>
+              <option value="Eliminate Player">Eliminate Player</option>
               <option value="Next Team Alphabetically">Next Team Alphabetically</option>
             </select>
           </div>
 
-          <div>
-            <label style={{ color: '#4ade80', fontWeight: 700 }}>Include Draws?</label>
-            <select
-              name="include_draws"
-              value={form.include_draws ? 'true' : 'false'}
-              onChange={(e) => setForm({ ...form, include_draws: e.target.value === 'true' })}
-              style={inputStyle}
-            >
-              <option value="false">No</option>
-              <option value="true">Yes</option>
-            </select>
-            <small style={{ color: '#9ca3af' }}>
-              Including draws means players can select a draw at any time and all games play to conclusion (no rollovers).
-            </small>
-          </div>
-
-          <div>
-            <label style={{ color: '#4ade80', fontWeight: 700 }}>Competitions</label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
-              {competitionsList.map((comp) => (
-                <button
-                  key={comp}
-                  type="button"
-                  onClick={() => toggleCompetition(comp)}
-                  style={{
-                    padding: '0.75rem',
-                    borderRadius: '9999px',
-                    border: form.competitions.includes(comp) ? '2px solid #16a34a' : '1px solid #064e3b',
-                    backgroundColor: form.competitions.includes(comp) ? '#16a34a' : '#f8fafc',
-                    color: '#000',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {comp}
-                </button>
-              ))}
-            </div>
-          </div>
-
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <input
-              type="checkbox"
-              name="is_public"
-              checked={form.is_public}
-              onChange={handleChange}
-              style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-            />
-            <label style={{ color: '#4ade80', fontWeight: 700 }}>Make Game Public</label>
+            <input type="checkbox" name="include_draws" checked={form.include_draws} onChange={handleChange} style={{ width: '18px', height: '18px', cursor: 'pointer' }} />
+            <label style={{ color: '#4ade80', fontWeight: 700 }}>
+              Include Draws
+              <span style={{ color: '#9ca3af', fontWeight: 400, marginLeft: '0.5rem' }}>
+                (Players can select Draws anytime — no rollovers)
+              </span>
+            </label>
           </div>
 
           <button type="submit" disabled={loading} style={buttonStyle}>
             {loading ? 'Creating...' : 'Create Game'}
           </button>
 
-          <a
-            href="/dashboard"
+          <button
+            onClick={() => (window.location.href = '/dashboard')}
+            type="button"
             style={{
               ...buttonStyle,
               backgroundColor: 'transparent',
-              border: '2px solid #ffffff',
-              color: '#ffffff',
-              textAlign: 'center',
-              marginTop: '1rem',
+              border: '2px solid #fff',
+              color: '#fff',
+              boxShadow: '0 0 10px rgba(255,255,255,0.4)',
             }}
           >
             Back to Dashboard
-          </a>
+          </button>
         </form>
 
-        {/* ✅ BET SLIP STYLE SUCCESS */}
-        {message.includes('✅') && createdGameDetails && (
-          <div
-            style={{
-              marginTop: '2rem',
-              backgroundColor: '#111',
-              border: '2px solid #16a34a',
-              borderRadius: '1rem',
-              padding: '1.5rem',
-              boxShadow: '0 0 15px rgba(22,163,74,0.6)',
-              color: '#fff',
-            }}
-          >
-            <h3 style={{ color: '#4ade80', fontWeight: 800, marginBottom: '1rem', textAlign: 'center' }}>
-              🧾 Game Created Successfully
-            </h3>
-
-            <div style={{ display: 'grid', rowGap: '0.6rem', fontSize: '0.95rem' }}>
-              <p>
-                <span style={{ color: '#4ade80', fontWeight: 700 }}>Game Code:</span>{' '}
-                <span
+        {message && (
+          <div style={{ marginTop: '2rem', color: message.includes('✅') ? '#16a34a' : '#ff3b30', fontWeight: 700, textAlign: 'center' }}>
+            {message.includes('✅') && inviteCode ? (
+              <div style={{ marginTop: '1rem', backgroundColor: '#ffffff10', border: '1px solid #ffffff', borderRadius: '0.5rem', padding: '1rem' }}>
+                <p style={{ color: '#fff', fontWeight: 700 }}>✅ Game Created Successfully</p>
+                <p>
+                  <span style={{ color: '#fff' }}>Game Code:</span>{' '}
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      border: '1px solid #fff',
+                      padding: '0.4rem 1rem',
+                      borderRadius: '9999px',
+                      backgroundColor: '#0f0f0f',
+                      color: '#fff',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {inviteCode}
+                  </span>
+                </p>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(inviteCode)
+                    setMessage('✅ Game code copied!')
+                    setTimeout(() => setMessage('✅ Game Created!'), 1500)
+                  }}
                   style={{
-                    display: 'inline-block',
-                    backgroundColor: '#0f0f0f',
-                    border: '1px solid #4ade80',
-                    borderRadius: '6px',
-                    padding: '0.25rem 0.75rem',
-                    color: '#fff',
+                    backgroundColor: 'transparent',
+                    border: '2px solid #ffffff',
+                    borderRadius: '9999px',
+                    padding: '0.5rem 1.25rem',
+                    color: '#ffffff',
                     fontWeight: 700,
-                    letterSpacing: '1px',
+                    cursor: 'pointer',
+                    marginTop: '1rem',
                   }}
                 >
-                  {createdGameDetails.game_code}
-                </span>
-              </p>
-              <p><span style={{ color: '#4ade80' }}>Start Date:</span> {createdGameDetails.start_date}</p>
-              <p><span style={{ color: '#4ade80' }}>Entry Fee:</span> £{createdGameDetails.entry_fee_per_player}</p>
-              <p><span style={{ color: '#4ade80' }}>Missed Selection Rule:</span> {createdGameDetails.missed_selection_rule}</p>
-              <p><span style={{ color: '#4ade80' }}>Include Draws:</span> {createdGameDetails.include_draws ? 'Yes' : 'No'}</p>
-              <p><span style={{ color: '#4ade80' }}>Competitions:</span> {createdGameDetails.competitions.join(', ')}</p>
-            </div>
-
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(createdGameDetails.game_code)
-                const copyText = document.getElementById('copy-status')
-                if (copyText) {
-                  copyText.style.opacity = '1'
-                  copyText.textContent = '✅ Copied!'
-                  setTimeout(() => {
-                    copyText.style.opacity = '0'
-                  }, 2000)
-                }
-              }}
-              style={{
-                width: '100%',
-                marginTop: '1rem',
-                backgroundColor: '#16a34a',
-                border: 'none',
-                borderRadius: '9999px',
-                padding: '0.75rem',
-                color: '#000',
-                fontWeight: 800,
-                cursor: 'pointer',
-                textTransform: 'uppercase',
-              }}
-            >
-              Copy Game Code
-            </button>
-
-            <p
-              id="copy-status"
-              style={{
-                color: '#4ade80',
-                textAlign: 'center',
-                fontWeight: 700,
-                marginTop: '0.5rem',
-                opacity: 0,
-                transition: 'opacity 0.3s ease',
-              }}
-            ></p>
+                  Copy Game Code
+                </button>
+              </div>
+            ) : (
+              message
+            )}
           </div>
-        )}
-
-        {message && !message.includes('✅') && (
-          <p
-            style={{
-              marginTop: '1.5rem',
-              color: message.includes('❌') ? '#ff3b30' : '#16a34a',
-              textAlign: 'center',
-              fontWeight: 700,
-            }}
-          >
-            {message}
-          </p>
         )}
       </div>
     </div>
