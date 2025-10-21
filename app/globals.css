@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* GLOBAL RESET & THEME */
+:root {
+  --color-green: #00ff00;
+  --color-white: #ffffff;
+  --color-black: #000000;
+  background-color: var(--color-black);
+  color: var(--color-white);
+  font-family: 'Orbitron', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background-color: var(--color-black);
+  color: var(--color-white);
+  overflow-x: hidden;
+}
+
+/* LINKS & BUTTONS BASE STYLE */
+a {
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+/* SMOOTH GLOW EFFECTS */
+.glow-green {
+  text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00, 0 0 40px #00ff00;
+}
+
+.glow-white {
+  text-shadow: 0 0 10px #ffffff, 0 0 20px #ffffff, 0 0 40px #ffffff;
+}
+
+/* BUTTON PULSE (OPTIONAL) */
+@keyframes pulseGlow {
+  0% {
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 35px rgba(255, 255, 255, 0.9);
+  }
+  100% {
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
+  }
+}
+
+.btn-glow {
+  animation: pulseGlow 2s infinite ease-in-out;
+}
+
+/* RESPONSIVE UTILITIES */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 3rem;
+  }
+  p {
+    font-size: 1.2rem;
+  }
+}
