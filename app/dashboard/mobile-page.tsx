@@ -24,7 +24,7 @@ export default function MobileDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black text-white text-lg font-poppins">
+      <div className="min-h-screen flex items-center justify-center bg-black text-white">
         Loading dashboard...
       </div>
     )
@@ -40,21 +40,44 @@ export default function MobileDashboard() {
   ]
 
   return (
-    <div className="bg-black text-white font-poppins min-h-screen flex flex-col items-center justify-start py-10 px-4">
-      <div className="w-full max-w-md bg-neutral-900 border-2 border-green-700 rounded-2xl p-6 shadow-[0_0_20px_rgba(22,163,74,0.6)] text-center">
-        <h1 className="text-xl font-extrabold uppercase text-white mb-2 drop-shadow-[0_0_6px_#16a34a]">
+    <div className="min-h-screen bg-black text-white font-poppins flex flex-col items-center justify-center px-6 py-10">
+      {/* 🚨 TEST MARKER TO CONFIRM DEPLOYMENT */}
+      <h1 className="text-3xl font-extrabold text-red-500 mb-6">
+        TEST VERSION 1
+      </h1>
+
+      <div className="w-full max-w-[380px] bg-neutral-900 border-2 border-green-700 rounded-2xl p-6 shadow-[0_0_25px_rgba(22,163,74,0.6)]">
+        <h1 className="text-2xl font-bold text-center text-white mb-1 drop-shadow-[0_0_6px_#16a34a]">
           Dashboard
         </h1>
-        <p className="text-green-400 font-semibold mb-8">
+        <p className="text-center text-green-400 text-sm mb-8">
           Welcome back, {user?.email}
         </p>
 
-        <div className="flex flex-col items-center gap-4">
+        {/* BUTTON STACK */}
+        <div className="flex flex-col items-center gap-4 w-full">
           {buttons.map((btn) => (
             <a
               key={btn.label}
               href={btn.link}
-              className="w-64 py-3 rounded-full font-extrabold text-sm uppercase tracking-wide border-2 border-white hover:bg-white hover:text-black hover:scale-105 transition-all duration-200 ease-in-out"
+              className="
+                w-full 
+                text-center 
+                py-3 
+                rounded-full 
+                border-2 
+                border-white 
+                text-sm 
+                font-bold 
+                uppercase 
+                tracking-wide 
+                transition-all 
+                duration-200 
+                ease-in-out 
+                hover:bg-white 
+                hover:text-black 
+                hover:scale-105
+              "
             >
               {btn.label}
             </a>
