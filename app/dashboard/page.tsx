@@ -11,10 +11,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     const getUser = async () => {
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser()
+      const { data: { user }, error } = await supabase.auth.getUser()
       if (error || !user) return router.push('/login')
       setUser(user)
       setLoading(false)
@@ -44,7 +41,7 @@ export default function Dashboard() {
   const buttons = [
     { label: 'START A GAME', link: '/games/new' },
     { label: 'PREMIUM GAME', link: '/games/premium' },
-    { label: 'JOIN A GAME', link: '/games/join' }, // ✅ correct route
+    { label: 'JOIN A GAME', link: '/games/join' },
     { label: 'ACTIVE GAMES', link: '/games/active' },
     { label: 'HISTORICAL GAMES', link: '/games/history' },
     { label: 'PROFILE', link: '/profile' },
@@ -53,29 +50,29 @@ export default function Dashboard() {
   return (
     <div
       style={{
+        width: '100%',
+        minHeight: '100vh',
+        overflowX: 'hidden',
+        overflowY: 'auto',
         backgroundColor: '#0f0f0f',
         color: '#f8fafc',
         fontFamily: 'Poppins, sans-serif',
-        minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'flex-start',
-        paddingTop: '6rem',
-        paddingLeft: '2rem',
-        paddingRight: '2rem',
-        paddingBottom: '2rem',
+        padding: '4vh 5vw',
       }}
     >
       <div
         style={{
           position: 'relative',
           width: '100%',
-          maxWidth: '60rem',
+          maxWidth: '900px',
           backgroundColor: '#1a1a1a',
           border: '2px solid #064e3b',
           borderRadius: '1rem',
-          padding: '2.5rem',
+          padding: '2rem 1.5rem',
           boxShadow: '0 0 30px rgba(22,163,74,0.8), 0 0 50px rgba(22,163,74,0.5)',
           textAlign: 'center',
         }}
@@ -97,7 +94,7 @@ export default function Dashboard() {
         <h1
           style={{
             color: '#ffffff',
-            fontSize: '1.75rem',
+            fontSize: 'clamp(1.5rem, 4vw, 2rem)',
             fontWeight: 800,
             textTransform: 'uppercase',
             textShadow: '0 0 8px #16a34a, 0 0 16px #16a34a',
@@ -108,12 +105,13 @@ export default function Dashboard() {
         >
           Dashboard
         </h1>
+
         <p
           style={{
             color: '#4ade80',
-            fontSize: '1rem',
+            fontSize: 'clamp(0.9rem, 2.5vw, 1rem)',
             fontWeight: 600,
-            marginBottom: '3rem',
+            marginBottom: '2.5rem',
             position: 'relative',
             zIndex: 2,
           }}
@@ -121,12 +119,14 @@ export default function Dashboard() {
           Welcome back, {user?.email}
         </p>
 
+        {/* BUTTONS */}
         <div
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, minmax(12rem, 1fr))',
-            gap: '1.5rem 2rem',
-            justifyItems: 'center',
+            display: 'flex',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+            gap: '1rem',
+            width: '100%',
             position: 'relative',
             zIndex: 2,
           }}
@@ -139,18 +139,20 @@ export default function Dashboard() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: '0.85rem 1.5rem',
+                padding: '0.85rem 1rem',
                 borderRadius: '9999px',
                 fontWeight: 800,
-                fontSize: '0.95rem',
+                fontSize: '0.9rem',
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px',
-                width: '12.5rem',
+                width: '45%',
+                minWidth: '150px',
+                maxWidth: '200px',
                 height: '3.25rem',
                 backgroundColor: 'transparent',
                 color: '#ffffff',
-                border: '3px solid #ffffff',
-                boxShadow: '0 0 20px rgba(255,255,255,0.5)',
+                border: '2px solid #ffffff',
+                boxShadow: '0 0 15px rgba(255,255,255,0.4)',
                 transition: 'all 0.25s ease-in-out',
                 textDecoration: 'none',
               }}
