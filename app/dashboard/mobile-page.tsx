@@ -11,7 +11,10 @@ export default function MobileDashboard() {
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser()
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser()
       if (error || !user) return router.push('/login')
       setUser(user)
       setLoading(false)
@@ -21,16 +24,7 @@ export default function MobileDashboard() {
 
   if (loading) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        backgroundColor: '#0f0f0f',
-        color: '#ffffff',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: '1.25rem',
-        fontFamily: 'Poppins, sans-serif',
-      }}>
+      <div className="min-h-screen flex items-center justify-center bg-black text-white text-lg font-poppins">
         Loading dashboard...
       </div>
     )
@@ -46,72 +40,26 @@ export default function MobileDashboard() {
   ]
 
   return (
-    <div style={{
-      backgroundColor: '#0f0f0f',
-      color: '#ffffff',
-      fontFamily: 'Poppins, sans-serif',
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'flex-start',
-      padding: '2rem 1rem',
-    }}>
-      <h1 style={{
-        color: '#16a34a',
-        fontSize: '1.6rem',
-        fontWeight: 800,
-        marginBottom: '1rem',
-        textTransform: 'uppercase',
-        textAlign: 'center',
-        textShadow: '0 0 8px #16a34a, 0 0 16px #16a34a',
-      }}>
-        Dashboard
-      </h1>
+    <div className="bg-black text-white font-poppins min-h-screen flex flex-col items-center justify-start py-10 px-4">
+      <div className="w-full max-w-md bg-neutral-900 border-2 border-green-700 rounded-2xl p-6 shadow-[0_0_20px_rgba(22,163,74,0.6)] text-center">
+        <h1 className="text-xl font-extrabold uppercase text-white mb-2 drop-shadow-[0_0_6px_#16a34a]">
+          Dashboard
+        </h1>
+        <p className="text-green-400 font-semibold mb-8">
+          Welcome back, {user?.email}
+        </p>
 
-      <p style={{
-        color: '#4ade80',
-        fontSize: '1rem',
-        marginBottom: '2rem',
-        textAlign: 'center',
-      }}>
-        Welcome back, {user?.email}
-      </p>
-
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '1rem',
-        width: '100%',
-        maxWidth: '420px',
-      }}>
-        {buttons.map((btn) => (
-          <a
-            key={btn.label}
-            href={btn.link}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '1rem',
-              borderRadius: '9999px',
-              backgroundColor: 'transparent',
-              border: '2px solid #ffffff',
-              color: '#ffffff',
-              fontWeight: 800,
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              fontSize: '1rem',
-              boxShadow: '0 0 12px rgba(255,255,255,0.4)',
-              textDecoration: 'none',
-              transition: 'transform 0.2s ease',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.03)')}
-            onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-          >
-            {btn.label}
-          </a>
-        ))}
+        <div className="flex flex-col items-center gap-4">
+          {buttons.map((btn) => (
+            <a
+              key={btn.label}
+              href={btn.link}
+              className="w-64 py-3 rounded-full font-extrabold text-sm uppercase tracking-wide border-2 border-white hover:bg-white hover:text-black hover:scale-105 transition-all duration-200 ease-in-out"
+            >
+              {btn.label}
+            </a>
+          ))}
+        </div>
       </div>
     </div>
   )
