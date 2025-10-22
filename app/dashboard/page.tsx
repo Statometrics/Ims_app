@@ -122,9 +122,8 @@ export default function Dashboard() {
         {/* BUTTONS */}
         <div
           style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
             gap: '1rem',
             width: '100%',
             position: 'relative',
@@ -145,9 +144,7 @@ export default function Dashboard() {
                 fontSize: '0.9rem',
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px',
-                width: '45%',
-                minWidth: '150px',
-                maxWidth: '200px',
+                minWidth: '140px',
                 height: '3.25rem',
                 backgroundColor: 'transparent',
                 color: '#ffffff',
