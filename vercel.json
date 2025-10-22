@@ -1,5 +1,4 @@
 {
-  "buildCommand": "next build --no-typescript",
   "framework": "nextjs",
   "installCommand": "npm install"
 }
